@@ -93,6 +93,13 @@ The original viv-addon JS used `f.holder` to get the facet DOM element. In WPGB 
 
 ---
 
+
+## Live Demo
+
+See this feature in action: [https://p1glossary.wpenginepowered.com/demo-mobile-filters/](https://p1glossary.wpenginepowered.com/demo-mobile-filters/)
+
+---
+
 ## Development Status
 
 - `viv-logic`: 7/10 — standalone deduplication and grid-ID detection are solid; sort rendering is a notable design decision
