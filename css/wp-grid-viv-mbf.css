@@ -1,4 +1,4 @@
-#vivgb-mbf-popup{display:none;position:fixed;background:#fff;top:0;z-index:12;width:100%;left:0;bottom:0;}
+#vivgb-mbf-popup{display:none;position:fixed;background:#fff;top:0;z-index:99999;width:100%;left:0;bottom:0;}
 #filter-mob-but-w{font-size:0;padding:20px 20px 10px;display:none;}
 #filter-mob-but-w button,#filter-mob-but-w span.mob-order,#filter-mob-but-w span.reset-all{display:inline-block;position:relative;padding:0 35px 0 12px;height:36px;background:#fff;border:1px solid #ccc;font-size:14px;font-weight:700;line-height:34px;margin:0 25px 10px 0;text-align:center;transition:.2s ease-in-out;color:#000;-webkit-appearance:none;cursor:pointer;}
 #filter-mob-but-w span.reset-all{padding-right:12px;cursor:pointer;}
@@ -9,7 +9,7 @@
 #filter-mob-but-w button span{display:none;position:absolute;width:18px;height:18px;border-radius:50%;color:#fff;font-size:12px;text-align:center;top:8px;right:10px;background:#000;line-height:18px}
 #filter-mob-but-w .filtered span{display:block;}
 #filter-mob-but-w .filtered img{display:none;}
-#mobile-top-filter{height:50px;line-height:50px;background:#fff;text-align:center;font-weight:700;border-bottom:1px solid #ccc;position:absolute;top:0;left:0;right:0;z-index:12}
+#mobile-top-filter{height:50px;line-height:50px;background:#fff;text-align:center;font-weight:700;border-bottom:1px solid #ccc;position:absolute;top:0;left:0;right:0;z-index:99999}
 #mob-filter-close{position:absolute;right:27px;top:0;width:20px;cursor:pointer;}
 #vivgb-mbf-sroll{left:0;right:0;height:100vh;top:0;z-index:111111;padding:50px 20px 155px;background:#fff;min-height:-webkit-fill-available;overflow: auto;}
 #viv-add-to-coll,#viv-add-new-coll,#viv-edit-coll{z-index:999999;}
