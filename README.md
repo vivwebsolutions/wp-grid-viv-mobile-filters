@@ -59,6 +59,17 @@ Works standalone or alongside `wp-grid-viv-addon` — when viv-addon is active, 
 
 ## Sort Facet Support
 
+---
+
+## Template Overrides
+
+You can override the plugin's output templates by placing files in your theme (or child theme) under `vigb/parts/`.
+
+- To override the filter button bar, copy `wp-content/plugins/wp-grid-viv-mobile-filters/parts/mobile-filters.php` to `wp-content/themes/your-theme/vigb/parts/mobile-filters.php`.
+- To override the popup, copy `wp-content/plugins/wp-grid-viv-mobile-filters/parts/mobile-filters-popup.php` to `wp-content/themes/your-theme/vigb/parts/mobile-filters-popup.php`.
+
+If a file exists in the theme, it will be used instead of the plugin version. This works even in environments where only minimal WordPress is loaded (shortinit mode) — the plugin does not rely on `locate_template`, а ищет файлы напрямую.
+
 The sort facet is intentionally **excluded** from the main facet drawer. Instead, it renders into a `<select>` (`#mob-order-select`) in the popup footer. This keeps the sort control accessible on mobile without cluttering the filter list.
 
 To have sort available on mobile: add a **Sort** facet to your grid (any area). The JS will automatically pick it up on the `facets.render` event.
