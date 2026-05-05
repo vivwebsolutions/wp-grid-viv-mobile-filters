@@ -149,28 +149,8 @@ add_filter( 'wp_grid_builder/layout/wrapper_tag', function( $div, $settings ) {
 // ---------------------------------------------------------------------------
 // Enqueue scripts and styles
 // ---------------------------------------------------------------------------
-add_action( 'wp_enqueue_scripts', function() {
-	global $post, $wpdb;
-
-	if ( empty( $post->post_content ) || strpos( $post->post_content, '[wpgb_grid' ) === false ) {
-		return;
-	}
-
-	// Extract grid ID from shortcode
-	preg_match( '#\[wpgb_grid[^\]]*\sid="(\d+)"#', $post->post_content, $matches );
-	$grid_id = ! empty( $matches[1] ) ? (int) $matches[1] : 0;
-	if ( ! $grid_id ) return;
-
-	$raw = $wpdb->get_var( $wpdb->prepare(
-		"SELECT settings FROM {$wpdb->prefix}wpgb_grids WHERE id = %d", $grid_id
-	) );
-	if ( ! $raw ) return;
-
-	$gs = json_decode( $raw );
-	if ( empty( $gs->en_viv_mobile_filters ) || ! $gs->en_viv_mobile_filters ) {
-		return;
-	}
-
+function vivmbf_enqueue_scripts($gs, $grid_id) {
+    static $vivgb_js_added = false;
 	$breakpoint = ! empty( $gs->viv_mob_breakpoint ) ? (int) $gs->viv_mob_breakpoint : 992;
 
 	wp_enqueue_style(
@@ -204,4 +184,20 @@ add_action( 'wp_enqueue_scripts', function() {
 		'var viv_first_load=true;',
 		'before'
 	);
-} );
+}
+
+add_filter( 'wp_grid_builder/grid/settings',function($settings){
+	if(!empty($settings['en_viv_mobile_filters']) && $settings['en_viv_mobile_filters']){
+		
+		// Подключаем скрипты когда грид рендерится
+		static $enqueued_grids = [];
+		$grid_id = isset($settings['id']) ? $settings['id'] : 0;
+		
+		if($grid_id && !isset($enqueued_grids[$grid_id])){
+			vivmbf_enqueue_scripts((object)$settings, $grid_id);
+			$enqueued_grids[$grid_id] = true;
+		}
+	}
+
+	return $settings;
+});
