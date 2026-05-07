@@ -8,7 +8,7 @@
             </div>
         </div>
     </div>
-    <div id="vivgb-mbf-sroll"></div>
+    <div id="vivgb-mbf-scroll"></div>
     <div id="mobile-bot-filter" class="vivgb-mbf">
         <div id="mbf-selection"></div>
         <button id="mob-show-res"><?php _e('Show Results', 'wp-grid-viv-mobile-filters'); ?></button>

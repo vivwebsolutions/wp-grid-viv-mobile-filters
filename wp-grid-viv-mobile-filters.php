@@ -130,18 +130,23 @@ add_filter( 'wp_grid_builder/layout/wrapper_tag', function( $div, $settings ) {
 	if ( empty( $settings->en_viv_mobile_filters ) || ! $settings->en_viv_mobile_filters ) {
 		return $div;
 	}
-    static $viv_mbf_bar_rendered = false;
-	if ( $viv_mbf_bar_rendered ) {
+	static $grids_bar_rendered = [];
+	static $popup_rendered     = false;
+
+	$viv_mbf_grid_id = (int) ( $settings->id ?? 0 );
+	if ( ! $viv_mbf_grid_id || isset( $grids_bar_rendered[ $viv_mbf_grid_id ] ) ) {
 		return $div;
 	}
-    $viv_mbf_bar_rendered = true;
-	
+	$grids_bar_rendered[ $viv_mbf_grid_id ] = true;
+
 	include wpgb_vmf_get_part_path( 'mobile-filters.php' );
 
-	add_action( 'wp_footer', function() {
-		include wpgb_vmf_get_part_path( 'mobile-filters-popup.php' );
-	}, 99 );
-	
+	if ( ! $popup_rendered ) {
+		$popup_rendered = true;
+		add_action( 'wp_footer', function () {
+			include wpgb_vmf_get_part_path( 'mobile-filters-popup.php' );
+		}, 99 );
+	}
 
 	return $div;
 }, 10, 2 );
@@ -150,7 +155,6 @@ add_filter( 'wp_grid_builder/layout/wrapper_tag', function( $div, $settings ) {
 // Enqueue scripts and styles
 // ---------------------------------------------------------------------------
 function vivmbf_enqueue_scripts($gs, $grid_id) {
-    static $vivgb_js_added = false;
 	$breakpoint = ! empty( $gs->viv_mob_breakpoint ) ? (int) $gs->viv_mob_breakpoint : 992;
 
 	wp_enqueue_style(
@@ -160,13 +164,14 @@ function vivmbf_enqueue_scripts($gs, $grid_id) {
 		WPGB_VMF_VERSION
 	);
 
-	// Hide sidebar / top filter areas on mobile; show the Filter button bar
+	// Hide sidebar / top filter areas on mobile for THIS grid only (scoped by .wpgb-grid-{id})
+	$sel = '.wpgb-grid-' . $grid_id;
 	$inline_css = '@media(max-width:' . $breakpoint . 'px){' .
-		'#filter-mob-but-w{display:block;padding-left:0;}' .
-		'.wp-grid-builder .wpgb-area.wpgb-area-top-2,' .
-		'.wp-grid-builder .wpgb-area.wpgb-area-top-1,' .
-		'.wp-grid-builder .wpgb-sidebar{display:none;}' .
-		'div.wp-grid-builder .wpgb-main .wpgb-layout{padding-left:0;max-width:100%;flex:0 0 100%;}' .
+		'.filter-mob-but-w[data-grid="' . $grid_id . '"]{display:block;padding-left:0;}' .
+		$sel . ' .wpgb-area.wpgb-area-top-2,' .
+		$sel . ' .wpgb-area.wpgb-area-top-1,' .
+		$sel . ' .wpgb-sidebar{display:none;}' .
+		$sel . ' .wpgb-main .wpgb-layout{padding-left:0;max-width:100%;flex:0 0 100%;}' .
 	'}';
 	wp_add_inline_style( 'wpgb-viv-mbf', $inline_css );
 
@@ -177,11 +182,11 @@ function vivmbf_enqueue_scripts($gs, $grid_id) {
 		WPGB_VMF_VERSION,
 		true
 	);
+	// Accumulate per-grid config into a shared object (safe for multiple calls)
 	wp_add_inline_script(
 		'wpgb-viv-mbf',
-		'var viv_mbf_breakpoint=' . $breakpoint . ';' .
-		'var vivgb_grid_id=' . $grid_id . ';' .
-		'var viv_first_load=true;',
+		'window.vivgb_mbf_grids=window.vivgb_mbf_grids||{};' .
+		'vivgb_mbf_grids[' . $grid_id . ']={breakpoint:' . $breakpoint . '};',
 		'before'
 	);
 }
@@ -189,7 +194,7 @@ function vivmbf_enqueue_scripts($gs, $grid_id) {
 add_filter( 'wp_grid_builder/grid/settings',function($settings){
 	if(!empty($settings['en_viv_mobile_filters']) && $settings['en_viv_mobile_filters']){
 		
-		// Подключаем скрипты когда грид рендерится
+		// Enqueue scripts when the grid is rendered
 		static $enqueued_grids = [];
 		$grid_id = isset($settings['id']) ? $settings['id'] : 0;
 		

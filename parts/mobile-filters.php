@@ -1,7 +1,7 @@
 <?php
 /**
  * Mobile filter button bar — rendered just before the grid wrapper.
- * $settings is available via the global $viv_mbf_active_settings.
+ * $settings and $viv_mbf_grid_id are available from the caller scope.
  */
 global $wpdb;
 
@@ -23,16 +23,16 @@ if ( ! empty( $settings->grid_layout ) ) {
     }
 }
 ?>
-<div id="filter-mob-but-w">
-    <button>Filter <img decoding="async" src="<?php echo esc_url( WPGB_VMF_URL . 'img/sk.svg' ); ?>"><span id="mob-filter-count"></span></button>
+<div class="filter-mob-but-w" data-grid="<?php echo (int) $viv_mbf_grid_id; ?>">
+    <button><?php _e( 'Filter', 'wp-grid-viv-mobile-filters' ); ?> <img decoding="async" src="<?php echo esc_url( WPGB_VMF_URL . 'img/sk.svg' ); ?>"><span class="mob-filter-count"></span></button>
 
     <?php if ( in_array( 'sort', $facet_types, true ) && ! empty( $settings->viv_show_mbf_order ) && $settings->viv_show_mbf_order ) : ?>
-    <span class="mob-order">Sort <img decoding="async" src="<?php echo esc_url( WPGB_VMF_URL . 'img/sort.svg' ); ?>">
-        <select name="order_by" class="order_by" id="mob-order-select"></select>
+    <span class="mob-order"><?php _e( 'Sort', 'wp-grid-viv-mobile-filters' ); ?> <img decoding="async" src="<?php echo esc_url( WPGB_VMF_URL . 'img/sort.svg' ); ?>">
+        <select name="order_by" class="order_by mob-order-select"></select>
     </span>
     <?php endif; ?>
 
     <?php if ( ! empty( $settings->viv_mob_mbf_reset ) && $settings->viv_mob_mbf_reset ) : ?>
-    <span class="reset-all">Reset All</span>
+    <span class="reset-all"><?php _e( 'Reset All', 'wp-grid-viv-mobile-filters' ); ?></span>
     <?php endif; ?>
 </div>
