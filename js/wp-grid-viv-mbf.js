@@ -192,10 +192,10 @@
 				checkedCount = parseInt(t.count_checked_facets) || 0;
 			} else {
 				allCount = parseInt(t.total) || 0;
+				var skipTypes = ['load_more', 'result_count', 'reset', 'sort', 'viv_view_toggle', 'pagination', 'selection', 'viv_parent'];
 				$.each(facets, function(id, facet){
-					if (facet.type === 'selection') {
-						var $h = $('<div>').html(facet.html);
-						checkedCount = $h.find('.wpgb-selection-facet li').length;
+					if (skipTypes.indexOf(facet.type) === -1 && Array.isArray(facet.selected)) {
+						checkedCount += facet.selected.length;
 					}
 				});
 			}
