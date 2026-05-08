@@ -10,6 +10,7 @@
 				wpgb:              null,
 				lastFacets:        null,
 				savedFacetParents: [],
+				facetSidebarOrder: {}, // { facetId: index } saved on first popup open
 				facetsInMobile:    false,
 				sortSlug:          '',
 				oldWidth:          $(document).width()
@@ -30,7 +31,13 @@
 			returnFacetsToGrid(activeGridId);
 		}
 		activeGridId = gridId;
+		$('#vivgb-mbf-scroll').addClass('vivgb-mbf-loading');
 		moveFacetsToMobile(getState(gridId).lastFacets, gridId);
+		// Let parent-plugin place children back into placeholders after DOM settles.
+		setTimeout(function() {
+			window.vivgb_parent_setup_all && window.vivgb_parent_setup_all();
+			$('#vivgb-mbf-scroll').removeClass('vivgb-mbf-loading');
+		}, 0);
 		// Show stored result count immediately (fetched may have fired before popup was opened)
 		var _st = getState(gridId);
 		if (_st.allCount !== undefined) {
@@ -63,36 +70,73 @@
 		var extraSkip  = (typeof window.viv_mbf_skip_facets !== 'undefined' && Array.isArray(window.viv_mbf_skip_facets))
 			? window.viv_mbf_skip_facets : [];
 		var skipAll    = skip.concat(extraSkip);
-		var facetsArr  = [];
 		var saveParents = state.savedFacetParents.length === 0;
+
+		// Collect child IDs of viv_parent facets — children travel inside parent placeholder.
+		var parentChildIds = {};
+		for (var pk in facets) {
+			var pf = facets[pk][0];
+			if (!pf || pf.type !== 'viv_parent') continue;
+			if (!pf.settings || !Array.isArray(pf.settings.childs)) continue;
+			pf.settings.childs.forEach(function(cid) {
+				parentChildIds[parseInt(cid, 10)] = true;
+			});
+		}
 
 		$('#vivgb-mbf-scroll').empty();
 		$('#mbf-selection').empty();
 
+		var toPlace = [];
 		for (var key in facets) {
 			var f = facets[key][0];
 			if (skipAll.indexOf(f.type) !== -1) continue;
+			// Children live inside the parent placeholder — skip them as standalone items.
+			// They are NOT saved to savedFacetParents; they travel with the parent element.
+			if (parentChildIds[f.id]) continue;
 			if (saveParents) {
 				state.savedFacetParents.push({el: f.holder, parent: $(f.holder).parent(), next: f.holder.nextSibling});
 			}
 			if (f.type === 'selection') {
 				$('#mbf-selection').append(f.holder);
 			} else {
-				if (f.order !== undefined && f.order !== null) {
-					facetsArr[f.order] = f.holder;
-				} else {
-					facetsArr.push(f.holder);
-				}
+				toPlace.push(f);
 			}
 		}
-		// Sort savedFacetParents by original DOM order (needed for correct restoration)
+
+		toPlace.sort(function(a, b) {
+			if (a.order != null && b.order != null) return a.order - b.order;
+			if (a.order != null) return -1;
+			if (b.order != null) return 1;
+			// First open: holders are in DOM — sort by real sidebar DOM position and save the order.
+			if (a.holder.isConnected && b.holder.isConnected) {
+				var cmp = a.holder.compareDocumentPosition(b.holder);
+				return (cmp & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1;
+			}
+			// Subsequent opens (holders detached after AJAX) — use saved sidebar order.
+			var oa = state.facetSidebarOrder[a.id];
+			var ob = state.facetSidebarOrder[b.id];
+			if (oa != null && ob != null) return oa - ob;
+			if (oa != null) return -1;
+			if (ob != null) return 1;
+			return 0;
+		});
+
+		// Save sidebar order on first open for use in subsequent AJAX refreshes.
+		if (saveParents) {
+			toPlace.forEach(function(f, i) { state.facetSidebarOrder[f.id] = i; });
+		}
+
+		toPlace.forEach(function(f) {
+			$('#vivgb-mbf-scroll').append(f.holder);
+		});
+
+		// Sort savedFacetParents by original DOM order (needed for correct restoration).
 		if (saveParents && state.savedFacetParents.length > 1) {
 			state.savedFacetParents.sort(function(a, b) {
 				var pos = a.el.compareDocumentPosition(b.el);
 				return (pos & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1;
 			});
 		}
-		$('#vivgb-mbf-scroll').append(facetsArr);
 		state.facetsInMobile = true;
 	}
 
@@ -175,6 +219,13 @@
 			}
 		});
 
+		// Loading: hide scroll to prevent visible re-flatten jerk.
+		wpgb.facets.on('loading', function(){
+			if (activeGridId === gridId) {
+				$('#vivgb-mbf-scroll').addClass('vivgb-mbf-loading');
+			}
+		});
+
 		// Loaded: store facets
 		wpgb.facets.on('loaded', function(facets){
 			state.lastFacets = facets;
@@ -206,7 +257,11 @@
 					}
 				});
 				state.facetsInMobile = false;
-				moveFacetsToMobile(facets, gridId);
+			moveFacetsToMobile(facets, gridId);
+			setTimeout(function() {
+				window.vivgb_parent_setup_all && window.vivgb_parent_setup_all();
+				$('#vivgb-mbf-scroll').removeClass('vivgb-mbf-loading');
+			}, 0);
 			}
 		});
 
@@ -240,8 +295,9 @@
 				var curWidth = $(document).width();
 				if (state.oldWidth <= breakpoint && curWidth > breakpoint) {
 					// Went to desktop — return facets, close popup if this was active grid
-					returnFacetsToGrid(gridId);
-					if (activeGridId === gridId) {
+					returnFacetsToGrid(gridId);				setTimeout(function() {
+					window.vivgb_parent_setup_all && window.vivgb_parent_setup_all();
+				}, 0);					if (activeGridId === gridId) {
 						$('#vivgb-mbf-popup').hide();
 						$('body').removeClass('noscroll');
 						activeGridId = null;
