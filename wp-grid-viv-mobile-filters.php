@@ -7,10 +7,18 @@
  * Author URI:  https://vivwebsolutions.com/
  * Requires at least: 5.2
  * Requires PHP: 7.2
- * Requires Plugins: wp-grid-builder
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
+
+if ( ! is_plugin_active( 'wp-grid-builder/wp-grid-builder.php' ) ) { 
+	add_action( 'admin_notices', function () {
+		echo '<div class="notice notice-error"><p>'; 
+			echo __('My Plugin requires WP Grid Builder.', 'wp-grid-viv-mobile-filters'); 
+		echo '</p></div>';
+		});
+	return; 
+}
 
 define( 'WPGB_VMF_VERSION', '1.0.0' );
 define( 'WPGB_VMF_URL',	 plugin_dir_url( __FILE__ ) );
