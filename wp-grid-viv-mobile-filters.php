@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 if ( ! is_plugin_active( 'wp-grid-builder/wp-grid-builder.php' ) ) { 
 	add_action( 'admin_notices', function () {
 		echo '<div class="notice notice-error"><p>'; 
-			echo __('My Plugin requires WP Grid Builder.', 'wp-grid-viv-mobile-filters'); 
+			echo __('WP Grid Builder ViV Mobile Filters requires WP Grid Builder.', 'wp-grid-viv-mobile-filters'); 
 		echo '</p></div>';
 		});
 	return; 
