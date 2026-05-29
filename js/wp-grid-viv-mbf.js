@@ -20,10 +20,10 @@
 	}
 
 	// ---- Open popup ----------------------------------------------------------
-
 	$(document).on('click', '.filter-mob-but-w > button, .vivgb-show-mob-filters', function(){
 		var $bar   = $(this).closest('.filter-mob-but-w');
 		var gridId = parseInt($bar.data('grid') || $(this).data('grid'), 10);
+		
 		if (!gridId) return;
 
 		// Return previous grid's facets before loading new ones
@@ -104,9 +104,9 @@
 		}
 
 		toPlace.sort(function(a, b) {
-			if (a.order != null && b.order != null) return a.order - b.order;
-			if (a.order != null) return -1;
-			if (b.order != null) return 1;
+			if (typeof a.order === 'number' && typeof b.order === 'number') return a.order - b.order;
+			if (typeof a.order === 'number') return -1;
+			if (typeof b.order === 'number') return 1;
 			// First open: holders are in DOM — sort by real sidebar DOM position and save the order.
 			if (a.holder.isConnected && b.holder.isConnected) {
 				var cmp = a.holder.compareDocumentPosition(b.holder);
@@ -125,11 +125,12 @@
 		if (saveParents) {
 			toPlace.forEach(function(f, i) { state.facetSidebarOrder[f.id] = i; });
 		}
-
+		
 		toPlace.forEach(function(f) {
 			$('#vivgb-mbf-scroll').append(f.holder);
 		});
 
+		$(document).trigger('vivgb.mbf.facetsMoved', [gridId, toPlace]);
 		// Sort savedFacetParents by original DOM order (needed for correct restoration).
 		if (saveParents && state.savedFacetParents.length > 1) {
 			state.savedFacetParents.sort(function(a, b) {
@@ -151,6 +152,7 @@
 				item.parent.append(item.el);
 			}
 		});
+		$(document).trigger('vivgb.mbf.facetsReturned', [gridId, state.savedFacetParents]);
 		state.facetsInMobile = false;
 	}
 
@@ -203,20 +205,23 @@
 			// Always store latest count so popup shows correct value on open
 			state.allCount = allCount;
 
-			var $bar = $('.filter-mob-but-w[data-grid="' + gridId + '"]');
-			if (checkedCount > 0) {
-				$bar.find('button').addClass('filtered');
-				$bar.find('.mob-filter-count').text(checkedCount);
-				$('.reset-all').removeClass('disabled');
-			} else {
-				$bar.find('button').removeClass('filtered');
-				$bar.find('.mob-filter-count').text('');
-				$('.reset-all').addClass('disabled');
-			}
-			// Update popup count only if this grid is the one currently in the popup
-			if (activeGridId === gridId) {
-				$('#mobile-bot-filter-r .search-count').text(allCount);
-			}
+			// Defer bar update so DOM is ready (fetched may fire during WPGB init)
+			setTimeout(function() {
+				var $bar = $('.filter-mob-but-w[data-grid="' + gridId + '"]');
+				if (checkedCount > 0) {
+					$bar.find('button').addClass('filtered');
+					$bar.find('.mob-filter-count').text(checkedCount);
+					$('.reset-all').removeClass('disabled');
+				} else {
+					$bar.find('button').removeClass('filtered');
+					$bar.find('.mob-filter-count').text('');
+					$('.reset-all').addClass('disabled');
+				}
+				// Update popup count only if this grid is the one currently in the popup
+				if (activeGridId === gridId) {
+					$('#mobile-bot-filter-r .search-count').text(allCount);
+				}
+			}, 0);
 		});
 
 		// Loading: hide scroll to prevent visible re-flatten jerk.
@@ -295,9 +300,11 @@
 				var curWidth = $(document).width();
 				if (state.oldWidth <= breakpoint && curWidth > breakpoint) {
 					// Went to desktop — return facets, close popup if this was active grid
-					returnFacetsToGrid(gridId);				setTimeout(function() {
-					window.vivgb_parent_setup_all && window.vivgb_parent_setup_all();
-				}, 0);					if (activeGridId === gridId) {
+					returnFacetsToGrid(gridId);		
+					setTimeout(function() {
+						window.vivgb_parent_setup_all && window.vivgb_parent_setup_all();
+					}, 0);
+					if (activeGridId === gridId) {
 						$('#vivgb-mbf-popup').hide();
 						$('body').removeClass('noscroll');
 						activeGridId = null;

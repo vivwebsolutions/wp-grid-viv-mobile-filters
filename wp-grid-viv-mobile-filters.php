@@ -27,9 +27,9 @@ define( 'WPGB_VMF_PATH',	plugin_dir_path( __FILE__ ) );
 function wpgb_vmf_get_part_path( $filename ) {
 	// Try child theme first
 	if ( defined('WP_CONTENT_DIR') ) {
-		$child = WP_CONTENT_DIR . '/themes/' . get_stylesheet() . '/vigb/parts/' . $filename;
+		$child = WP_CONTENT_DIR . '/themes/' . get_stylesheet() . '/vivgb/parts/' . $filename;
 		if ( file_exists( $child ) ) return $child;
-		$parent = WP_CONTENT_DIR . '/themes/' . get_template() . '/vigb/parts/' . $filename;
+		$parent = WP_CONTENT_DIR . '/themes/' . get_template() . '/vivgb/parts/' . $filename;
 		if ( file_exists( $parent ) ) return $parent;
 	} else {
 		// Fallback: try to guess theme path relative to plugin
