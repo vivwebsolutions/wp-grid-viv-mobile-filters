@@ -1,0 +1,41 @@
+name: Deploy plugin wp-grid-viv-mobile-filters to WP Engine (s1vivce)
+
+# Deploys this repo (the wp-grid-viv-mobile-filters plugin) to the s1vivce WP Engine install,
+# from GitHub's runners (port 22 is open there — bypasses local firewalls).
+#
+# Restricted to pushes/dispatches by sovabarmak (see the "if:" on the job below) —
+# a push to main by anyone else on this repo will NOT trigger a deploy. This avoids an
+# accidental production deploy from someone else's push, without needing branch protection.
+#
+# One-time setup before this does anything:
+#   1. WP Engine portal — add this repo's deploy SSH public key to the s1vivce install
+#      (or reuse an existing WPE SSH key).
+#   2. GitHub repo — Settings — Secrets and variables — Actions:
+#        - Secret  WPE_SSHG_KEY_PRIVATE  = the matching PRIVATE key
+#   Until both exist, this workflow is inert.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: github.actor == 'sovabarmak'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to WP Engine
+        uses: wpengine/github-action-wpe-site-deploy@v3
+        with:
+          WPE_SSHG_KEY_PRIVATE: ${{ secrets.WPE_SSHG_KEY_PRIVATE }}
+          WPE_ENV: s1vivce
+          # Push the repo root into the plugin folder only — never the site root.
+          SRC_PATH: "."
+          REMOTE_PATH: "wp-content/plugins/wp-grid-viv-mobile-filters"
+          PHP_LINT: true
+          CACHE_CLEAR: true
+          # No build step needed — commit any build artifacts directly. Exclude VCS/dev cruft.
+          # No --delete on automated runs (safer); add it deliberately for a clean mirror.
+          FLAGS: -azvr --inplace --exclude=".git*" --exclude="node_modules" --exclude="docs" --exclude="*.log"
