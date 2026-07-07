@@ -1,34 +1,42 @@
-#vivgb-mbf-popup{display:none;position:fixed;background:#fff;top:0;z-index:20;width:100%;left:0;bottom:0; flex-direction: column;}
+:root{
+	--vivmbf-bg:#fff;      /* drawer / bar surfaces */
+	--vivmbf-fg:#000;      /* text, dark accents, primary button */
+	--vivmbf-border:#ccc;  /* hairline borders */
+}
+#vivgb-mbf-popup{display:none;position:fixed;background:var(--vivmbf-bg);top:0;z-index:20;width:100%;left:0;bottom:0; flex-direction: column;}
 .filter-mob-but-w{font-size:0;padding:20px 20px 10px;display:none;}
-.filter-mob-but-w button,.filter-mob-but-w span.mob-order,.filter-mob-but-w span.reset-all{display:inline-block;position:relative;padding:0 35px 0 12px;height:36px;background:#fff;border:1px solid #ccc;font-size:14px;font-weight:700;line-height:34px;margin:0 25px 10px 0;text-align:center;transition:.2s ease-in-out;color:#000;-webkit-appearance:none;cursor:pointer;}
+.filter-mob-but-w button,.filter-mob-but-w span.mob-order,.filter-mob-but-w span.reset-all{display:inline-block;position:relative;padding:0 35px 0 12px;height:36px;background:var(--vivmbf-bg);border:1px solid var(--vivmbf-border);font-size:14px;font-weight:700;line-height:34px;margin:0 25px 10px 0;text-align:center;transition:.2s ease-in-out;color:var(--vivmbf-fg);-webkit-appearance:none;cursor:pointer;}
 .filter-mob-but-w span.reset-all{padding-right:12px;cursor:pointer;}
 .filter-mob-but-w img{width:15px;position:absolute;right:11px;height:37px;top:0}
 .filter-mob-but-w span select{position:absolute;top:0;left:0;z-index:20;height:34px;width:80px;opacity:0}
 .vivgb-mbf{display:none;}
 #vivgb-temp{display:none;}
-.filter-mob-but-w button span{display:none;position:absolute;width:18px;height:18px;border-radius:50%;color:#fff;font-size:12px;text-align:center;top:8px;right:10px;background:#000;line-height:18px}
+.filter-mob-but-w button span{display:none;position:absolute;width:18px;height:18px;border-radius:50%;color:var(--vivmbf-bg);font-size:12px;text-align:center;top:8px;right:10px;background:var(--vivmbf-fg);line-height:18px}
 .filter-mob-but-w .filtered span{display:block;}
 .filter-mob-but-w .filtered img{display:none;}
-#mobile-top-filter{padding:10px 0;background:#fff;text-align:center;font-weight:700;border-bottom:1px solid #ccc}
+#mobile-top-filter{padding:10px 0;background:var(--vivmbf-bg);text-align:center;font-weight:700;border-bottom:1px solid var(--vivmbf-border)}
 #mob-filter-close{width:20px;}
-#vivgb-mbf-scroll{left:0;right:0;height:100vh;top:0;z-index:21;padding:20px 20px 0;background:#fff;min-height:-webkit-fill-available;overflow: auto;overflow-x: hidden;}
+#vivgb-mbf-scroll{left:0;right:0;height:100vh;top:0;z-index:21;padding:20px 20px 0;background:var(--vivmbf-bg);min-height:-webkit-fill-available;overflow: auto;overflow-x: hidden;}
 .vivgb-mbf{display:block;}
-#mobile-bot-filter{height:150px;background:#fff;padding:15px 20px 10px;}
-#mob-show-res{width:100%;background-color:#000;text-transform:uppercase;color:#fff;padding:10px 0;font-weight:700;border:none;font-size:16px;position:relative;height:39px}
+#mobile-bot-filter{height:150px;background:var(--vivmbf-bg);padding:15px 20px 10px;}
+#mob-show-res{width:100%;background-color:var(--vivmbf-fg);text-transform:uppercase;color:var(--vivmbf-bg);padding:10px 0;font-weight:700;border:none;font-size:16px;position:relative;height:39px}
 .mobile-f-bot-links{width:50%;float:left;line-height:36px}
 #mobile-bot-filter-r{text-align:right;}
 .wpgb-loading #mob-show-res{font-size:0;}
-.wpgb-loading #mob-show-res::before{margin:-13px 0 0 -13px;width:24px;height:24px;position:absolute;left:50%;top:50%;content:"";cursor:wait;border-radius:24px;background-clip:padding-box;border:2px solid #fff;border-top-color:transparent;-webkit-animation:.75s linear infinite spinner;animation:.75s linear infinite spinner}
+.wpgb-loading #mob-show-res::before{margin:-13px 0 0 -13px;width:24px;height:24px;position:absolute;left:50%;top:50%;content:"";cursor:wait;border-radius:24px;background-clip:padding-box;border:2px solid var(--vivmbf-bg);border-top-color:transparent;-webkit-animation:.75s linear infinite spinner;animation:.75s linear infinite spinner}
 #vivgb-mbf-popup .acplt-menu,.ui-autocomplete {z-index:23;}
-#mbf-selection ul{border-top:1px solid #000;padding-top:10px;width:100%;overflow-x:auto;white-space: nowrap;display:block;}
+#mbf-selection ul{border-top:1px solid var(--vivmbf-fg);padding-top:10px;width:100%;overflow-x:auto;white-space: nowrap;display:block;}
 #mbf-selection ul li{display:inline-block}
 #mbf-selection:empty{display:none;}
 #mbf-selection fieldset{margin-bottom:0}
 #mbf-selection .wpgb-inline-list{margin-bottom:0}
 .reset-all.disabled{opacity:.5}
 .filter-mob-but-w .toggle-view-w{display:inline-block;overflow: hidden;position:relative;top:8px;margin-right:25px;}
-body.vivgb-noscroll,body.noscroll, html:has(body.noscroll){overflow-y:hidden}
-.noscroll #viv-main-header,.noscroll #wpadminbar{display:none;}
+/* Scroll lock while the drawer is open (body class added by js). */
+body.vivgb-noscroll, html:has(body.vivgb-noscroll){overflow-y:hidden;}
+/* Hide the WP admin bar while the drawer is open. To also hide a theme header,
+   add your own rule in the theme, e.g. `.vivgb-noscroll #site-header{display:none}` */
+.vivgb-noscroll #wpadminbar{display:none;}
 #filter-mob-popup-top-row{display: flex;justify-content: space-between;align-items: center;padding: 0 20px;}
 #filter-mob-popup-top-row button.reset-all{padding:0 10px;font-size: 14px;}
 #mbf-selection .wpgb-facet-title{display:none;}

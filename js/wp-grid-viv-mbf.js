@@ -19,11 +19,23 @@
 		return gridStates[id];
 	}
 
+	// Stamp data-grid onto class-based bars inside a grid wrapper that omit it,
+	// so a custom-HTML "Filter" button (rendered after init) resolves to its grid.
+	function stampBars(gridId) {
+		$('.wpgb-grid-' + gridId + ' .filter-mob-but-w:not([data-grid])').attr('data-grid', gridId);
+	}
+
 	// ---- Open popup ----------------------------------------------------------
 	$(document).on('click', '.filter-mob-but-w > button, .vivgb-show-mob-filters', function(){
 		var $bar   = $(this).closest('.filter-mob-but-w');
 		var gridId = parseInt($bar.data('grid') || $(this).data('grid'), 10);
-		
+		// Fall back to the enclosing grid wrapper when the bar has no data-grid yet
+		// (custom-HTML button that rendered/was clicked before it was stamped).
+		if (!gridId) {
+			var m = ($bar.closest('[class*="wpgb-grid-"]').attr('class') || '').match(/wpgb-grid-(\d+)/);
+			gridId = m ? parseInt(m[1], 10) : 0;
+		}
+
 		if (!gridId) return;
 
 		// Return previous grid's facets before loading new ones
@@ -44,14 +56,14 @@
 			$('#mobile-bot-filter-r .search-count').text(_st.allCount);
 		}
 		$('#vivgb-mbf-popup').css('display', 'flex').hide().fadeIn(300);
-		$('body').addClass('noscroll');
+		$('body').addClass('vivgb-noscroll');
 	});
 
 	// ---- Close popup ---------------------------------------------------------
 
 	$(document).on('click', '#mob-filter-close, #mob-show-res', function(){
 		$('#vivgb-mbf-popup').fadeOut();
-		$('body').removeClass('noscroll');
+		$('body').removeClass('vivgb-noscroll');
 		if (activeGridId) {
 			var st = getState(activeGridId);
 			if (st.wpgb) st.wpgb.grid.layout();
@@ -180,6 +192,11 @@
 		var wpgb       = instances && instances[0];
 		if (!wpgb || !wpgb.facets) return;
 		state.wpgb     = wpgb;
+
+		// Best-effort stamp at init; re-run on every fetch below to catch bars that
+		// render later (e.g. a custom-HTML button injected after wpgb.loaded).
+		stampBars(gridId);
+
 		var breakpoint = config.breakpoint || 992;
 		state.oldWidth = $(document).width();
 
@@ -207,6 +224,7 @@
 
 			// Defer bar update so DOM is ready (fetched may fire during WPGB init)
 			setTimeout(function() {
+				stampBars(gridId);
 				var $bar = $('.filter-mob-but-w[data-grid="' + gridId + '"]');
 				if (checkedCount > 0) {
 					$bar.find('button').addClass('filtered');
@@ -306,7 +324,7 @@
 					}, 0);
 					if (activeGridId === gridId) {
 						$('#vivgb-mbf-popup').hide();
-						$('body').removeClass('noscroll');
+						$('body').removeClass('vivgb-noscroll');
 						activeGridId = null;
 					}
 				}

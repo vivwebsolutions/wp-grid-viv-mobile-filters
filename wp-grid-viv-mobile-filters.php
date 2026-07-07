@@ -11,7 +11,13 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! is_plugin_active( 'wp-grid-builder/wp-grid-builder.php' ) ) { 
+// is_plugin_active() lives in wp-admin/includes/plugin.php and is not loaded on
+// the front end — pull it in so this dependency guard is safe outside wp-admin.
+if ( ! function_exists( 'is_plugin_active' ) ) {
+	require_once ABSPATH . 'wp-admin/includes/plugin.php';
+}
+
+if ( ! is_plugin_active( 'wp-grid-builder/wp-grid-builder.php' ) ) {
 	add_action( 'admin_notices', function () {
 		echo '<div class="notice notice-error"><p>'; 
 			echo __('WP Grid Builder ViV Mobile Filters requires WP Grid Builder.', 'wp-grid-viv-mobile-filters'); 
@@ -23,6 +29,10 @@ if ( ! is_plugin_active( 'wp-grid-builder/wp-grid-builder.php' ) ) {
 define( 'WPGB_VMF_VERSION', '1.0.0' );
 define( 'WPGB_VMF_URL',	 plugin_dir_url( __FILE__ ) );
 define( 'WPGB_VMF_PATH',	plugin_dir_path( __FILE__ ) );
+
+add_action( 'init', function () {
+	load_plugin_textdomain( 'wp-grid-viv-mobile-filters', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+} );
 
 function wpgb_vmf_get_part_path( $filename ) {
 	// Try child theme first
@@ -38,7 +48,7 @@ function wpgb_vmf_get_part_path( $filename ) {
 		if ( is_array($themes) ) {
 			foreach ($themes as $theme) {
 				if ($theme === '.' || $theme === '..') continue;
-				$candidate = $base . $theme . '/vigb/parts/' . $filename;
+				$candidate = $base . $theme . '/vivgb/parts/' . $filename;
 				if ( file_exists($candidate) ) return $candidate;
 			}
 		}
@@ -48,7 +58,9 @@ function wpgb_vmf_get_part_path( $filename ) {
 
 // ---------------------------------------------------------------------------
 // Inject total into render_response (first load) — same as refresh_response
-// so that t.total is always available in JS, not only after filtering
+// so that t.total is always available in JS, not only after filtering.
+// Applies to every grid response by design; harmless, since the drawer JS only
+// reads it on grids where mobile filters are enabled.
 // ---------------------------------------------------------------------------
 add_filter( 'wp_grid_builder/async/render_response', function( $response ) {
     if ( function_exists( 'wpgb_get_found_objects' ) ) {
@@ -64,7 +76,7 @@ add_filter( 'wp_grid_builder/tabs/grid', function( $tabs ) {
 	foreach ( $tabs as $tab ) {
 		if ( ( $tab['name'] ?? '' ) === 'viv' ) return $tabs;
 	}
-	$tabs[] = [ 'name' => 'viv', 'title' => __( 'ViV', 'wpgb-viv-mobile-filters' ) ];
+	$tabs[] = [ 'name' => 'viv', 'title' => __( 'ViV', 'wp-grid-viv-mobile-filters' ) ];
 	return $tabs;
 } );
 
@@ -76,11 +88,11 @@ add_filter( 'wp_grid_builder/controls/grid', function( $controls ) {
 	$mobile_fields = [
 		'en_viv_mobile_filters' => [
 			'type'  => 'toggle',
-			'label' => __( 'Enable Viv Mobile Filters', 'wpgb-viv-mobile-filters' ),
+			'label' => __( 'Enable Viv Mobile Filters', 'wp-grid-viv-mobile-filters' ),
 		],
 		'viv_mob_breakpoint' => [
 			'type'  => 'number',
-			'label' => __( 'Mobile Breakpoint (px)', 'wpgb-viv-mobile-filters' ),
+			'label' => __( 'Mobile Breakpoint (px)', 'wp-grid-viv-mobile-filters' ),
 			'condition' => [
 				[
 					'field'   => 'en_viv_mobile_filters',
@@ -91,8 +103,8 @@ add_filter( 'wp_grid_builder/controls/grid', function( $controls ) {
 		],
         'viv_show_mbf_order' => [
 			'type'  => 'toggle',
-			'label' => __( 'Show Order Button', 'wpgb-viv-mobile-filters' ),
-            'info'=> __( 'Requires a "sort" facet to be added to the grid layout', 'wpgb-viv-mobile-filters' ),
+			'label' => __( 'Show Order Button', 'wp-grid-viv-mobile-filters' ),
+            'info'=> __( 'Requires a "sort" facet to be added to the grid layout', 'wp-grid-viv-mobile-filters' ),
 			'condition' => [
 				[
 					'field'   => 'en_viv_mobile_filters',
@@ -103,7 +115,7 @@ add_filter( 'wp_grid_builder/controls/grid', function( $controls ) {
 		],
         'viv_mob_mbf_reset' => [
 			'type'  => 'toggle',
-			'label' => __( 'Show Reset Button', 'wpgb-viv-mobile-filters' ),
+			'label' => __( 'Show Reset Button', 'wp-grid-viv-mobile-filters' ),
 			'condition' => [
 				[
 					'field'   => 'en_viv_mobile_filters',
@@ -121,7 +133,7 @@ add_filter( 'wp_grid_builder/controls/grid', function( $controls ) {
 		$controls['viv_mobile'] = [
 			'type'   => 'fieldset',
 			'panel'  => 'viv',
-			'legend' => __( 'Viv Mobile Filters', 'wpgb-viv-mobile-filters' ),
+			'legend' => __( 'Viv Mobile Filters', 'wp-grid-viv-mobile-filters' ),
 			'fields' => $mobile_fields,
 		];
 	}

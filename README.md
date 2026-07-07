@@ -1,117 +1,77 @@
-# WP Grid Builder — Viv Mobile Filters
+# WP Grid Builder — ViV Mobile Filters
 
-A standalone plugin that adds a full-screen mobile filter drawer to WP Grid Builder grids.
+Adds a full-screen **mobile filter drawer** to [WP Grid Builder](https://wpgridbuilder.com/) grids.
+Enable it per grid; below a configurable breakpoint the plugin hides the grid's
+sidebar/top facet areas and shows a **Filter** bar that opens a drawer containing
+all the facets, with a live result count and a "Show Results" button.
 
-## What It Does
-
-On mobile viewports (below a configurable breakpoint), this plugin hides the standard WP Grid Builder sidebar and top-area facets, and replaces them with a "Filters" button bar. Tapping the button opens a full-screen drawer containing all the facets. A "Show Results" button and a result count keep the user oriented while filtering.
-
-Works standalone or alongside `wp-grid-viv-addon` — when viv-addon is active, it defers to viv-addon's built-in mobile filter handling to avoid duplicate assets.
-
----
-
-## How It Works
-
-- `wp_grid_builder/controls/grid` — adds the **Enable Viv Mobile Filters** toggle and **Mobile Breakpoint** field to the grid's admin panel. If `wp-grid-viv-addon` is active, the fields are merged into the existing Viv fieldset; otherwise a standalone `viv_mobile` fieldset is created.
-
-- `wp_grid_builder/layout/wrapper_tag` — during grid rendering, if `en_viv_mobile_filters` is enabled, injects the filter button bar (`parts/mobile-filters.php`) immediately before the grid wrapper, and registers the full-screen popup (`parts/mobile-filters-popup.php`) in `wp_footer`.
-
-- `wp_enqueue_scripts` — on pages containing `[wpgb_grid id="X"]`, reads the grid settings from the DB, checks `en_viv_mobile_filters`, and enqueues `css/wp-grid-viv-mbf.css` and `js/wp-grid-viv-mbf.js`. Inline CSS hides the sidebar/top areas below the breakpoint. Inline JS sets `viv_mbf_breakpoint`, `vivgb_grid_id`, and `viv_first_load`.
-
-**Deduplication guard:** both the layout hook and the enqueue hook bail early with `if ( defined( 'WPGB_VIV_URL' ) ) return;` when viv-addon is active.
-
-### JS behaviour (`js/wp-grid-viv-mbf.js`)
-
-- Listens for `wpgb.loaded` event to get a reference to the WPGB grid instance via `WP_Grid_Builder.instance(vivgb_grid_id)`.
-- On `facets.loaded`: moves facet DOM elements into the drawer on first load (skips `load_more`, `result_count`, `reset`, `sort`, `viv_view_toggle`). The **sort** facet is handled separately — it gets rendered into `#mob-order-select`.
-- On `facets.fetched`: updates the result count and filtered-state indicator on the button.
-- On window resize: triggers a grid refresh when crossing the breakpoint boundary.
+- **Requires:** WordPress 5.2+, PHP 7.2+, WP Grid Builder (active)
+- **Optional:** works alongside `wp-grid-viv-addon` / `wp-grid-viv-parent`, but has
+  **no dependency** on them — fully standalone and portable.
 
 ---
 
-## Requirements
+## Install & enable
 
-- WP Grid Builder 2.x
-- PHP 7.2+
-- WordPress 5.2+
-- **Does not require** `wp-grid-viv-addon` (works standalone)
+1. Copy this folder to `wp-content/plugins/wp-grid-viv-mobile-filters/`.
+2. Activate it in **WP Admin → Plugins**.
+3. Open a grid in the WPGB editor → **ViV** panel → turn on **Enable ViV Mobile Filters**.
 
----
+## Settings (per grid, WPGB grid editor → ViV)
 
-## Installation
-
-1. Copy the plugin folder to `wp-content/plugins/wp-grid-viv-mobile-filters/`.
-2. Activate the plugin in WP Admin → Plugins.
-3. In the WPGB grid editor, find the **Viv** panel (or **Viv Mobile Filters** if viv-addon is not active).
-4. Toggle **Enable Viv Mobile Filters** on.
-5. Set **Mobile Breakpoint** (default: 992px).
+| Setting | Key | Default | Notes |
+|---------|-----|---------|-------|
+| Enable ViV Mobile Filters | `en_viv_mobile_filters` | off | Turns the drawer on for this grid |
+| Mobile Breakpoint (px) | `viv_mob_breakpoint` | 992 | Drawer/bar activate at `max-width` ≤ this |
+| Show Order Button | `viv_show_mbf_order` | off | Needs a **sort** facet in the grid layout |
+| Show Reset Button | `viv_mob_mbf_reset` | off | Adds a "Reset All" control to the bar |
 
 ---
 
-## Configuration
+## How it works
 
-| Setting | Key | Default | Description |
-|---------|-----|---------|-------------|
-| Enable Viv Mobile Filters | `en_viv_mobile_filters` | off | Show/hide the mobile filter drawer for this grid |
-| Mobile Breakpoint (px) | `viv_mob_breakpoint` | 992 | Viewport width below which mobile filters activate |
+- **Admin** (`wp_grid_builder/controls/grid`): registers the settings above. If a
+  `viv` fieldset already exists (e.g. `wp-grid-viv-addon`), the fields merge into it;
+  otherwise a standalone **ViV Mobile Filters** fieldset is created.
+- **Front-end** (`wp_grid_builder/layout/wrapper_tag`): when enabled, includes the
+  Filter bar (`parts/mobile-filters.php`) right before the grid wrapper and queues the
+  drawer (`parts/mobile-filters-popup.php`) into `wp_footer`.
+- **Assets** (`wp_grid_builder/grid/settings`): enqueues `css/` + `js/`, plus per-grid
+  inline CSS that (below the breakpoint) hides `.wpgb-sidebar` / top areas and reveals
+  the bar, and inline JS exposing `window.vivgb_mbf_grids[gridId] = { breakpoint }`.
+- **JS** (`js/wp-grid-viv-mbf.js`): on `wpgb.loaded` it hooks each enabled grid, moves
+  facet DOM into the drawer on open (and back to the grid on desktop resize), keeps the
+  result count and filter badge in sync, and mirrors a **sort** facet into the bar's
+  `<select>`.
 
----
+## Template overrides (theme)
 
-## Sort Facet Support
+Drop a same-named file under your (child) theme to override a part:
 
----
+```
+wp-content/themes/<theme>/vivgb/parts/mobile-filters.php
+wp-content/themes/<theme>/vivgb/parts/mobile-filters-popup.php
+```
 
-## Template Overrides
+The theme copy wins over the plugin default. Lookup is a direct file check
+(`get_stylesheet()` then `get_template()`), so it also works under WPGB's SHORTINIT
+AJAX context where `locate_template()` is unavailable. `$viv_mbf_grid_id` and
+`$settings` are in scope inside these files.
 
-You can override the plugin's output templates by placing files in your theme (or child theme) under `vigb/parts/`.
+## Custom Filter button
 
-- To override the filter button bar, copy `wp-content/plugins/wp-grid-viv-mobile-filters/parts/mobile-filters.php` to `wp-content/themes/your-theme/vigb/parts/mobile-filters.php`.
-- To override the popup, copy `wp-content/plugins/wp-grid-viv-mobile-filters/parts/mobile-filters-popup.php` to `wp-content/themes/your-theme/vigb/parts/mobile-filters-popup.php`.
-
-If a file exists in the theme, it will be used instead of the plugin version. This works even in environments where only minimal WordPress is loaded (shortinit mode) — the plugin does not rely on `locate_template`, а ищет файлы напрямую.
-
-The sort facet is intentionally **excluded** from the main facet drawer. Instead, it renders into a `<select>` (`#mob-order-select`) in the popup footer. This keeps the sort control accessible on mobile without cluttering the filter list.
-
-To have sort available on mobile: add a **Sort** facet to your grid (any area). The JS will automatically pick it up on the `facets.render` event.
-
----
-
-## Known Issues / Limitations
-
-- Only supports one grid per page (uses `vivgb_grid_id` which is set from the first matched grid).
-- The resize handler reloads the page when crossing from mobile → desktop to restore the full sidebar layout. This is intentional but can feel jarring.
-- When used without viv-addon, the result count requires the grid to fire `facets.fetched` on initial load (WPGB v2.3+ does this).
-
----
-
-## WPGB v2 Compatibility Notes (Lessons Learned)
-
-These issues were discovered during development and are documented here for future agents/developers:
-
-### `WP_Grid_Builder.instance()` returns object without `.init`
-
-WPGB v2.3+ changed the grid instance API. The `.init` property no longer exists. The JS checks `wpgb.init` as a guard; without a shim this causes the entire drawer to break silently.
-
-**Fix:** `demo-cpt.php` (mu-plugin) patches `WP_Grid_Builder.instance` to add `inst.init = true` when missing.
-
-### `vivgb_grid_id` and `viv_first_load` must be defined by this plugin
-
-When running without viv-addon, these globals are undefined. Added via `wp_add_inline_script(..., 'before')`.
-
-### Facet `holder` property does not exist in WPGB v2
-
-The original viv-addon JS used `f.holder` to get the facet DOM element. In WPGB v2, the `facets.loaded` callback passes a keyed object; use `f[key][0].holder` or the actual DOM element directly via `document.querySelector('[data-facet="' + id + '"]')`.
+You don't have to use the default bar. Any element works as the trigger as long as it
+carries the plugin's hooks — see **[AGENTS.md](AGENTS.md)** for the full markup contract
+(`.filter-mob-but-w`, `.mob-filter-count`, `.vivgb-show-mob-filters`, auto `data-grid`).
 
 ---
 
+## Notes
 
-## Live Demo
+- **Portable:** no hardcoded site/theme selectors or URLs. Colors are CSS variables
+  (`--vivmbf-bg` / `--vivmbf-fg` / `--vivmbf-border`); the drawer locks scroll via the
+  `body.vivgb-noscroll` class (style your own header hiding off that class if needed).
+- One grid is shown in the drawer at a time; opening another grid's bar swaps its facets in.
+- Crossing the breakpoint back to desktop returns facets to the grid and closes the drawer.
 
-See this feature in action: [https://p1glossary.wpenginepowered.com/demo-mobile-filters/](https://p1glossary.wpenginepowered.com/demo-mobile-filters/)
-
----
-
-## Development Status
-
-- `viv-logic`: 7/10 — standalone deduplication and grid-ID detection are solid; sort rendering is a notable design decision
-- `grid-logic`: 7/10 — WPGB v2 breakpoint reload and `.init` shim work well; `holder` API change required adaptation
+For the contract, extension points and developer notes, see **[AGENTS.md](AGENTS.md)**.
